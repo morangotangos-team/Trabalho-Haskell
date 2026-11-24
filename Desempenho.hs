@@ -1,10 +1,3 @@
--- Atividade Final - Paradigmas de Linguagens de Programação
--- Projeto 4 - Desempenho Acadêmico (Grupo 7)
--- Integrantes: Enzo Guntijo Ghislotti, Aimê Couto Andrade,
---              Fernando Felipe de Castro Pereira, Paula Silvério de Castro
---
--- Executar: runghc Desempenho.hs
-
 module Main where
 
 -- ===================== Tipos =====================
