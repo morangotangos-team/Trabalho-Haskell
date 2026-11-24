@@ -36,6 +36,8 @@ O arquivo reimplementa a função `relatorio` em C, usando `struct`, `enum`, la�
 
 ## Como executar
 
+WEB tipo um GDB para o Haskell: https://play.haskell.org/
+
 Haskell (precisa do [GHC](https://www.haskell.org/ghcup/)):
 
 ```bash
