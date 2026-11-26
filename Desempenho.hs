@@ -6,12 +6,9 @@ type Turma = [Aluno]
 data Situacao = Aprovado | Recuperacao | Reprovado | SemNotas
     deriving (Eq, Show)
 
--- Maybe em vez de devolver 0: lista vazia não tem média, e 0 seria confundido com nota zero.
 media :: [Double] -> Maybe Double
 media [] = Nothing
-media notas = Just (soma / fromIntegral (length notas))
-    where
-        soma = foldr (+) 0 notas
+media notas = Just (sum notas / fromIntegral (length notas))
 
 situacao :: Aluno -> Situacao
 situacao (_, notas) =
@@ -22,8 +19,6 @@ situacao (_, notas) =
             | m >= 4 -> Recuperacao
             | otherwise -> Reprovado
 
--- A contagem parte da lista fixa de situações, e não dos alunos,
--- para que as situações com zero alunos também apareçam.
 relatorio :: Turma -> [(Situacao, Int)]
 relatorio turma =
     map contar todasSituacoes
@@ -31,7 +26,7 @@ relatorio turma =
         todasSituacoes = [Aprovado, Recuperacao, Reprovado, SemNotas]
         alunos = map situacao turma
 
-        contar s = (s, (length . filter (== s)) alunos)
+        contar s = (s, length (filter (== s) alunos))
 
 acimaDe :: Double -> Turma -> [String]
 acimaDe limite turma =
@@ -50,8 +45,8 @@ lancarNota nome nota turma =
             | n == nome = (n, notas ++ [nota])
             | otherwise = (n, notas)
 
-turmaExemplo :: Turma
-turmaExemplo =
+turma :: Turma
+turma =
     [ ("Paula", [8, 6])
     , ("Enzo", [5])
     , ("Roussian", [])
@@ -59,44 +54,27 @@ turmaExemplo =
     , ("Aime", [3, 2])
     ]
 
--- Turma usada na seção "Verificação" do enunciado.
-turmaVerificacao :: Turma
-turmaVerificacao = [("Ana", [8, 6]), ("Bia", [5]), ("Caio", [])]
-
 main :: IO ()
 main = do
-    putStrLn "=== Medias ==="
+    putStrLn "Medias"
     print (media [8, 6])
     print (media [10, 9])
-    putStrLn "Caso especial (lista vazia):"
     print (media [])
 
-    putStrLn "\n=== Situacao do Aluno ==="
-    mapM_ (\aluno -> print (fst aluno, situacao aluno)) turmaExemplo
+    putStrLn "\n Situacao do Aluno"
+    mapM_ (\aluno -> print (fst aluno, situacao aluno)) turma
 
-    putStrLn "\n=== Relatorio ==="
-    print (relatorio turmaExemplo)
-    putStrLn "Caso especial (turma vazia):"
-    print (relatorio [])
+    putStrLn "\n Relatorio "
+    print (relatorio turma)
 
     putStrLn "\n=== Alunos acima da nota 7 ==="
-    print (acimaDe 7 turmaExemplo)
-    putStrLn "Caso especial (ninguem acima de 10):"
-    print (acimaDe 10 turmaExemplo)
+    print (acimaDe 7 turma)
 
-    putStrLn "\n=== Lancamento de Nota ==="
-    let novaTurma = lancarNota "Enzo" 9 turmaExemplo
+    putStrLn "\n Lancamento de Nota"
+    let novaTurma = lancarNota "Bia" 9 turma
+
     putStrLn "Turma original:"
-    print turmaExemplo
-    putStrLn "Turma atualizada (nota 9 para Enzo):"
-    print novaTurma
-    putStrLn "Situacao do Enzo antes e depois:"
-    print (situacao ("Enzo", [5]), situacao ("Enzo", [5, 9]))
-    putStrLn "Caso especial (aluno que nao existe, a turma volta igual):"
-    print (lancarNota "Bia" 9 turmaExemplo == turmaExemplo)
+    print turma
 
-    putStrLn "\n=== Verificacao do enunciado ==="
-    print (media [8, 6])
-    print (media [])
-    print (acimaDe 7 turmaVerificacao)
-    print (relatorio turmaVerificacao)
+    putStrLn "Turma atualizada:"
+    print novaTurma
