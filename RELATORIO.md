@@ -9,15 +9,15 @@ Atividade Final de **Paradigmas de Linguagens de Programação** (PUC Goiás) �
 | Arquivo | Conteúdo |
 | --- | --- |
 | `Desempenho.hs` | Programa em Haskell. **É o arquivo que tem a `main`.** Contém os tipos, as funções do projeto, as turmas de exemplo e a `main`, que demonstra cada função em um caso normal e um caso especial. |
-| `relatorio.c` | Funcionalidade comparativa em C: `relatorio` (junto com `media` e `situacao`, das quais depende), sobre as mesmas entradas da versão Haskell. |
+| `Desempenho.c` | Funcionalidade comparativa em C: **só o `relatorio`**, sobre as mesmas entradas da versão Haskell. A classificação de cada aluno, de que ele precisa, fica numa função auxiliar interna (`classificar`). |
 
 Como executar:
 
 ```bash
 runghc Desempenho.hs                          # Haskell (ou cole o código em https://play.haskell.org/)
 
-gcc -std=c99 -Wall -o relatorio relatorio.c   # C
-./relatorio                                   # no Windows: .\relatorio.exe
+gcc -std=c99 -Wall -o desempenho Desempenho.c  # C
+./desempenho                                  # no Windows: .\desempenho.exe
 ```
 
 O programa Haskell está em um único arquivo, então não há nada a juntar: basta rodar o `Desempenho.hs`.
@@ -41,7 +41,7 @@ data Situacao = Aprovado | Recuperacao | Reprovado | SemNotas
 - **Situação como tipo próprio (`data`).** As situações são um conjunto fechado de quatro valores. Com `data`, o compilador só aceita esses quatro valores, sem o risco de uma string digitada errado como `"Aprovdo"`. O `deriving Eq` permite comparar situações (usado em `filter (== s)`) e o `deriving Show` permite imprimi-las.
 - **Ausência de média com `Maybe`.** Uma lista vazia não tem média. Em vez de inventar um valor (0 seria confundido com nota zero), `media` devolve `Maybe Double`.
 
-**Em C**, a mesma modelagem (que está no `relatorio.c`) fica assim:
+**Em C**, a mesma modelagem (que está no `Desempenho.c`) fica assim:
 
 ```c
 typedef enum { APROVADO, RECUPERACAO, REPROVADO, SEM_NOTAS } Situacao;
@@ -172,12 +172,12 @@ soma = foldr (+) 0 notas
 
 ```c
 double soma = 0.0;
-for (int i = 0; i < qtd; i++) {
-    soma += notas[i];
+for (int i = 0; i < a->qtd_notas; i++) {
+    soma += a->notas[i];
 }
 ```
 
-O laço em C precisa de uma variável que muda a cada volta (`soma`), de um índice (`i`) e do tamanho guardado à parte (`qtd`). O `foldr` só diz o valor inicial e a operação. Não há índice nem variável alterada, e não existe o risco de errar a condição de parada.
+O laço em C precisa de uma variável que muda a cada volta (`soma`), de um índice (`i`) e do tamanho guardado à parte (`qtd_notas`). O `foldr` só diz o valor inicial e a operação. Não há índice nem variável alterada, e não existe o risco de errar a condição de parada.
 
 ---
 
@@ -207,7 +207,7 @@ void relatorio(const Aluno turma[], int n, int contagem[QTD_SITUACOES]) {
         contagem[s] = 0;
     }
     for (int i = 0; i < n; i++) {
-        contagem[situacao(&turma[i])]++;
+        contagem[classificar(&turma[i])]++;
     }
 }
 ```
@@ -217,7 +217,7 @@ void relatorio(const Aluno turma[], int n, int contagem[QTD_SITUACOES]) {
 | **Organização dos dados** | Tupla `(String, [Double])`, lista de alunos, `data Situacao`. A lista sabe o próprio tamanho. | `struct Aluno` com vetor de tamanho máximo e `qtd_notas`; vetor de alunos com `n` passado à parte; `enum Situacao` e um vetor de nomes só para imprimir. |
 | **Controle do processamento** | Etapas separadas: `map` transforma, `filter` seleciona, `length` agrega. A ordem do resultado vem de `todasSituacoes`. | Um laço só percorre a turma e faz tudo de uma vez. A ordem vem do `enum`, usado como índice do vetor. |
 | **Estado** | Nada é alterado. Cada etapa devolve uma lista nova e o resultado é o valor de retorno. | O vetor `contagem` é zerado e incrementado a cada aluno. O resultado é escrito em um vetor recebido por parâmetro, e o mesmo vetor é reaproveitado entre as chamadas da `main`. |
-| **Tratamento de erro** | Lista vazia em `media` dá `Nothing`, e o `case` obriga a tratar esse caso. | `media` devolve 0 ou 1 e escreve a média por ponteiro. Nada obriga quem chama a testar o retorno: se esquecer, usa uma variável não inicializada. |
+| **Tratamento de erro** | Lista vazia em `media` dá `Nothing`, e o `case` obriga a tratar esse caso. | `classificar` testa `qtd_notas == 0` antes de dividir. Nada obriga esse teste: se for esquecido, o programa divide por zero e a média vira `NaN`, sem nenhum aviso do compilador. |
 
 A versão em C percorre a turma uma vez. A versão em Haskell percorre a lista de situações uma vez para cada uma das quatro situações. Para o tamanho de uma turma isso não pesa, e a versão Haskell fica mais clara, porque cada etapa pode ser lida e testada isoladamente.
 
