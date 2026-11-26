@@ -28,11 +28,31 @@ data Situacao = Aprovado | Recuperacao | Reprovado | SemNotas
 | `acimaDe :: Double -> Turma -> [String]` | Nomes com média maior ou igual ao limite, na ordem original e sem os alunos sem notas |
 | `lancarNota :: String -> Double -> Turma -> Turma` | Devolve uma turma **nova** com uma nota a mais; a turma original não é alterada (mostra a imutabilidade) |
 
-Todas as regras ficam em funções puras. A única parte que faz IO é a `main`, que mostra cada função com um caso normal e um caso especial.
+Todas as regras ficam em funções puras. A única parte que faz IO é a `main`.
+
+### Turma de demonstração
+
+```haskell
+turma =
+    [ ("Paula", [8, 6])
+    , ("Enzo", [5])
+    , ("Roussian", [])
+    , ("Matheus", [10, 9])
+    , ("Aime", [3, 2])
+    ]
+```
+
+A `main` mostra, nesta ordem:
+
+1. **Médias** de `[8, 6]`, `[10, 9]` e de uma lista vazia (caso especial, `Nothing`);
+2. **Situação de cada aluno** da turma;
+3. **Relatório** com a contagem por situação;
+4. **Alunos com média acima de 7**;
+5. **Lançamento de nota**: chama `lancarNota "Bia" 9 turma` e imprime a turma original e a atualizada.
 
 ### Versão comparativa em C (`relatorio.c`)
 
-O arquivo reimplementa a função `relatorio` em C, usando `struct`, `enum`, laços e um vetor de contadores. As turmas são as mesmas da versão em Haskell, para comparar os dois paradigmas.
+O arquivo reimplementa a função `relatorio` em C, usando `struct`, `enum`, laços e um vetor de contadores, para comparar os dois paradigmas. Ele usa turmas próprias (`turma_exemplo` e `turma_completa`).
 
 ## Como executar
 
@@ -54,8 +74,27 @@ gcc -std=c99 -Wall -o relatorio relatorio.c
 ## Exemplo de saída
 
 ```text
-media [8,6]        = Just 7.0
-media []           = Nothing
-acimaDe 7 turmaExemplo  = ["Ana"]
-relatorio turmaExemplo = [(Aprovado,1),(Recuperacao,1),(Reprovado,0),(SemNotas,1)]
+Medias
+Just 7.0
+Just 9.5
+Nothing
+
+ Situacao do Aluno
+("Paula",Aprovado)
+("Enzo",Recuperacao)
+("Roussian",SemNotas)
+("Matheus",Aprovado)
+("Aime",Reprovado)
+
+ Relatorio 
+[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]
+
+=== Alunos acima da nota 7 ===
+["Paula","Matheus"]
+
+ Lancamento de Nota
+Turma original:
+[("Paula",[8.0,6.0]),("Enzo",[5.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
+Turma atualizada:
+[("Paula",[8.0,6.0]),("Enzo",[5.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
 ```
