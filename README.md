@@ -10,6 +10,11 @@ O programa calcula as médias de uma turma, classifica cada estudante e gera o r
 
 Os dados de demonstração ficam no próprio código. O programa não tem menu, não lê do teclado e não usa arquivo nem banco de dados.
 
+| Arquivo | Conteúdo |
+| --- | --- |
+| `Desempenho.hs` | Programa principal em Haskell (paradigma funcional) |
+| `relatorio.c` | A função `relatorio` reescrita em C (paradigma imperativo), para comparação |
+
 ### Tipos
 
 ```haskell
@@ -50,9 +55,52 @@ A `main` mostra, nesta ordem:
 4. **Alunos com média acima de 7**;
 5. **Lançamento de nota**: chama `lancarNota "Bia" 9 turma` e imprime a turma original e a atualizada.
 
-### Versão comparativa em C (`relatorio.c`)
+## Comparação Haskell × C: a função `relatorio`
 
-O arquivo reimplementa a função `relatorio` em C, usando `struct`, `enum`, laços e um vetor de contadores, para comparar os dois paradigmas. Ele usa turmas próprias (`turma_exemplo` e `turma_completa`).
+O `relatorio.c` reimplementa o `relatorio` (junto com `media` e `situacao`, das quais ele depende) usando **a mesma turma** do `Desempenho.hs`. As duas versões imprimem o mesmo resultado, então dá para comparar só a forma de resolver.
+
+**Haskell (funcional):** monta uma lista nova a partir da turma, sem alterar nada.
+
+```haskell
+relatorio :: Turma -> [(Situacao, Int)]
+relatorio turma =
+    map contar todasSituacoes
+    where
+        todasSituacoes = [Aprovado, Recuperacao, Reprovado, SemNotas]
+        alunos = map situacao turma
+        contar s = (s, length (filter (== s) alunos))
+```
+
+**C (imperativo):** um laço percorre a turma e vai alterando um vetor de contadores.
+
+```c
+void relatorio(const Aluno turma[], int n, int contagem[QTD_SITUACOES]) {
+    for (int s = 0; s < QTD_SITUACOES; s++) {
+        contagem[s] = 0;
+    }
+    for (int i = 0; i < n; i++) {
+        contagem[situacao(&turma[i])]++;
+    }
+}
+```
+
+| Ponto | Haskell (`Desempenho.hs`) | C (`relatorio.c`) |
+| --- | --- | --- |
+| Dados do aluno | `type Aluno = (String, [Double])` (tupla) | `struct Aluno` com nome, vetor de notas e `qtd_notas` |
+| Tamanho da lista de notas | A lista sabe o próprio tamanho (`length`) | Guardado à parte em `qtd_notas` |
+| Situações | `data Situacao` | `enum Situacao` + vetor de nomes para imprimir |
+| Média sem notas | `Maybe Double`: `Nothing` ou `Just m` | Retorno `0`/`1` indica se existe; a média volta por ponteiro |
+| Classificação | `case` + guardas (`\|`) | `if` em sequência |
+| Contagem | `map`, `filter` e `length` geram uma lista nova | Laço `for` que incrementa `contagem[...]` |
+| Estado | Nada é alterado (imutabilidade) | O vetor `contagem` é modificado (estado mutável) |
+| Resultado | Devolvido pela função: `[(Situacao, Int)]` | Escrito no vetor recebido por parâmetro |
+| Ordem das situações | Definida pela lista `todasSituacoes` | Definida pela ordem do `enum` |
+
+**Saída das duas versões (mesma turma):**
+
+```text
+[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]
+```
 
 ## Como executar
 
@@ -72,6 +120,8 @@ gcc -std=c99 -Wall -o relatorio relatorio.c
 ```
 
 ## Exemplo de saída
+
+### Haskell
 
 ```text
 Medias
@@ -97,4 +147,18 @@ Turma original:
 [("Paula",[8.0,6.0]),("Enzo",[5.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
 Turma atualizada:
 [("Paula",[8.0,6.0]),("Enzo",[5.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
+```
+
+### C
+
+```text
+Situacao do Aluno
+("Paula",Aprovado)
+("Enzo",Recuperacao)
+("Roussian",SemNotas)
+("Matheus",Aprovado)
+("Aime",Reprovado)
+
+Relatorio
+[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]
 ```
