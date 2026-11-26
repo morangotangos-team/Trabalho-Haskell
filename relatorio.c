@@ -4,25 +4,36 @@
  * Integrantes: Enzo Guntijo Ghislotti, Aimê Couto Andrade,
  *              Fernando Felipe de Castro Pereira, Paula Silvério de Castro
  *
- * Funcionalidade reimplementada: relatorio (com media e situacao embutidas).
+ * Funcionalidade comparada: relatorio (com media e situacao junto),
+ * usando a MESMA turma da versão Haskell (Desempenho.hs).
+ *
  * Compilar: gcc -std=c99 -Wall -o relatorio relatorio.c
  * Executar: ./relatorio
  */
 #include <stdio.h>
 
 #define MAX_NOTAS 10
+#define QTD_SITUACOES 4
 
+/* Haskell: data Situacao = Aprovado | Recuperacao | Reprovado | SemNotas */
 typedef enum { APROVADO, RECUPERACAO, REPROVADO, SEM_NOTAS } Situacao;
 
-static const char *NOMES_SITUACAO[] = { "Aprovado", "Recuperacao", "Reprovado", "SemNotas" };
+static const char *NOMES_SITUACAO[QTD_SITUACOES] = {
+    "Aprovado", "Recuperacao", "Reprovado", "SemNotas"
+};
 
+/* Haskell: type Aluno = (String, [Double])
+ * Em C o vetor não sabe o próprio tamanho, então a quantidade de notas
+ * precisa ser guardada à parte. */
 typedef struct {
     const char *nome;
     double notas[MAX_NOTAS];
-    int qtd_notas;            /* tamanho guardado à parte: o vetor não sabe o próprio tamanho */
+    int qtd_notas;
 } Aluno;
 
-/* Sem Maybe: a média volta por ponteiro e o retorno indica se ela existe (1) ou não (0). */
+/* Haskell: media :: [Double] -> Maybe Double
+ * C não tem Maybe: a média volta por ponteiro e o retorno diz se ela
+ * existe (1, como Just) ou não (0, como Nothing). */
 int media(const double notas[], int qtd, double *resultado) {
     if (qtd == 0) return 0;
     double soma = 0.0;
@@ -33,6 +44,8 @@ int media(const double notas[], int qtd, double *resultado) {
     return 1;
 }
 
+/* Haskell: situacao :: Aluno -> Situacao (case + guardas)
+ * Em C: if em sequência, na mesma ordem das guardas. */
 Situacao situacao(const Aluno *a) {
     double m;
     if (!media(a->notas, a->qtd_notas, &m)) return SEM_NOTAS;
@@ -41,49 +54,51 @@ Situacao situacao(const Aluno *a) {
     return REPROVADO;
 }
 
-/* Um único laço percorre a turma e atualiza o vetor de contadores recebido. */
-void relatorio(const Aluno turma[], int n, int contagem[4]) {
-    for (int s = 0; s < 4; s++) contagem[s] = 0;
+/* Haskell: relatorio :: Turma -> [(Situacao, Int)]
+ *   map contar todasSituacoes, com contar s = (s, length (filter (== s) alunos))
+ * Em C: um laço percorre a turma uma vez e vai ALTERANDO um vetor de
+ * contadores (estado mutável), em vez de montar uma lista nova. */
+void relatorio(const Aluno turma[], int n, int contagem[QTD_SITUACOES]) {
+    for (int s = 0; s < QTD_SITUACOES; s++) {
+        contagem[s] = 0;
+    }
     for (int i = 0; i < n; i++) {
         contagem[situacao(&turma[i])]++;
     }
 }
 
-void imprimir(const char *titulo, const int contagem[4]) {
-    printf("%s = [", titulo);
-    for (int s = 0; s < 4; s++) {
-        printf("(%s,%d)%s", NOMES_SITUACAO[s], contagem[s], s < 3 ? "," : "");
+/* Imprime no mesmo formato do print do Haskell:
+ * [(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)] */
+void imprimir_relatorio(const int contagem[QTD_SITUACOES]) {
+    printf("[");
+    for (int s = 0; s < QTD_SITUACOES; s++) {
+        printf("(%s,%d)", NOMES_SITUACAO[s], contagem[s]);
+        if (s < QTD_SITUACOES - 1) printf(",");
     }
     printf("]\n");
 }
 
 int main(void) {
-    /* Mesmas entradas da versão Haskell */
-    Aluno turma_exemplo[] = {
-        { "Ana",  {8, 6}, 2 },
-        { "Bia",  {5},    1 },
-        { "Caio", {0},    0 },
+    /* Mesma turma do Desempenho.hs. Roussian não tem notas (qtd_notas = 0);
+     * o {0} só existe porque C99 não aceita inicializador vazio. */
+    Aluno turma[] = {
+        { "Paula",    {8, 6},  2 },
+        { "Enzo",     {5},     1 },
+        { "Roussian", {0},     0 },
+        { "Matheus",  {10, 9}, 2 },
+        { "Aime",     {3, 2},  2 },
     };
-    Aluno turma_completa[] = {
-        { "Ana",   {8, 6},        2 },
-        { "Bia",   {5},           1 },
-        { "Caio",  {0},           0 },
-        { "Davi",  {10, 9.5, 9},  3 },
-        { "Eva",   {3, 2.5},      2 },
-        { "Fabio", {4, 4},        2 },
-        { "Gabi",  {6.9, 7},      2 },
-        { "Hugo",  {0},           1 },
-    };
-    int contagem[4];
+    int n = sizeof(turma) / sizeof(turma[0]);
+    int contagem[QTD_SITUACOES];
 
-    relatorio(turma_exemplo, 3, contagem);
-    imprimir("relatorio turmaExemplo", contagem);
+    printf("Situacao do Aluno\n");
+    for (int i = 0; i < n; i++) {
+        printf("(\"%s\",%s)\n", turma[i].nome, NOMES_SITUACAO[situacao(&turma[i])]);
+    }
 
-    relatorio(turma_completa, 8, contagem);   /* o mesmo vetor é sobrescrito */
-    imprimir("relatorio turmaCompleta", contagem);
-
-    relatorio(NULL, 0, contagem);             /* turma vazia: caso especial */
-    imprimir("relatorio []", contagem);
+    printf("\nRelatorio\n");
+    relatorio(turma, n, contagem);
+    imprimir_relatorio(contagem);
 
     return 0;
 }
