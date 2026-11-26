@@ -9,7 +9,7 @@ Atividade Final de **Paradigmas de Linguagens de Programação** (PUC Goiás), P
 | Entregável pedido | Arquivo |
 | --- | --- |
 | Código Haskell (tipos, funções e `main` com caso normal e caso especial) | [`Desempenho.hs`](Desempenho.hs) — **tem a `main`** |
-| Código comparativo em C, sobre entradas equivalentes | [`relatorio.c`](relatorio.c) — função `relatorio` |
+| Código comparativo em C (uma funcionalidade), sobre entradas equivalentes | [`Desempenho.c`](Desempenho.c) — função `relatorio` |
 | Relatório (modelagem, operação por dentro, imutabilidade e pureza, recursos funcionais, comparação, tabela de integrantes) | [`RELATORIO.md`](RELATORIO.md) |
 
 ## O que o código faz
@@ -70,7 +70,7 @@ turmaVerificacao = [("Ana", [8, 6]), ("Bia", [5]), ("Caio", [])]   -- a do enunc
 
 ## Comparação Haskell × C: a função `relatorio`
 
-O `relatorio.c` reimplementa o `relatorio` (com `media` e `situacao`) usando as **mesmas entradas** do Haskell: `turmaExemplo`, a turma da verificação e a turma vazia. As duas versões imprimem os mesmos resultados.
+O `Desempenho.c` reimplementa **só o `relatorio`** usando as **mesmas entradas** do Haskell: `turmaExemplo`, a turma da verificação e a turma vazia. A classificação que o `relatorio` precisa fica numa função auxiliar interna (`classificar`). As duas versões imprimem os mesmos resultados.
 
 **Haskell:** monta listas novas, sem alterar nada.
 
@@ -91,17 +91,17 @@ void relatorio(const Aluno turma[], int n, int contagem[QTD_SITUACOES]) {
         contagem[s] = 0;
     }
     for (int i = 0; i < n; i++) {
-        contagem[situacao(&turma[i])]++;
+        contagem[classificar(&turma[i])]++;
     }
 }
 ```
 
-| Aspecto | Haskell (`Desempenho.hs`) | C (`relatorio.c`) |
+| Aspecto | Haskell (`Desempenho.hs`) | C (`Desempenho.c`) |
 | --- | --- | --- |
 | Dados | Tupla, listas e `data Situacao`; a lista sabe o tamanho | `struct`, vetor com `qtd_notas` à parte e `enum` |
 | Controle | Etapas: `map` → `filter` → `length` | Um laço `for` faz tudo de uma vez |
 | Estado | Nada é alterado; o resultado é o retorno | O vetor `contagem` é zerado e incrementado |
-| Erro (sem notas) | `Maybe`: `Nothing` ou `Just m` | Retorno 0/1 e média por ponteiro |
+| Erro (sem notas) | `Maybe`: `Nothing` ou `Just m`, e o `case` obriga a tratar | Teste `qtd_notas == 0` antes de dividir; nada obriga a fazer |
 
 A comparação completa está no [relatório](RELATORIO.md#5-comparação-haskell--c-relatorio).
 
@@ -118,8 +118,8 @@ runghc Desempenho.hs
 C (precisa do `gcc`):
 
 ```bash
-gcc -std=c99 -Wall -o relatorio relatorio.c
-./relatorio          # no Windows: .\relatorio.exe
+gcc -std=c99 -Wall -o desempenho Desempenho.c
+./desempenho         # no Windows: .\desempenho.exe
 ```
 
 ## Saída
@@ -167,16 +167,9 @@ Nothing
 [(Aprovado,1),(Recuperacao,1),(Reprovado,0),(SemNotas,1)]
 ```
 
-### C (`./relatorio`)
+### C (`./desempenho`)
 
 ```text
-=== Situacao do Aluno ===
-("Paula",Aprovado)
-("Enzo",Recuperacao)
-("Roussian",SemNotas)
-("Matheus",Aprovado)
-("Aime",Reprovado)
-
 === Relatorio ===
 [(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]
 Caso especial (turma vazia):
