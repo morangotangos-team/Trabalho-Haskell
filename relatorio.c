@@ -79,25 +79,40 @@ void imprimir_relatorio(const int contagem[QTD_SITUACOES]) {
 }
 
 int main(void) {
-    /* Mesma turma do Desempenho.hs. Roussian não tem notas (qtd_notas = 0);
-     * o {0} só existe porque C99 não aceita inicializador vazio. */
-    Aluno turma[] = {
+    /* Mesmas entradas do Desempenho.hs. Roussian e Caio não têm notas
+     * (qtd_notas = 0); o {0} só existe porque C99 não aceita inicializador vazio. */
+    Aluno turma_exemplo[] = {
         { "Paula",    {8, 6},  2 },
         { "Enzo",     {5},     1 },
         { "Roussian", {0},     0 },
         { "Matheus",  {10, 9}, 2 },
         { "Aime",     {3, 2},  2 },
     };
-    int n = sizeof(turma) / sizeof(turma[0]);
-    int contagem[QTD_SITUACOES];
+    Aluno turma_verificacao[] = {
+        { "Ana",  {8, 6}, 2 },
+        { "Bia",  {5},    1 },
+        { "Caio", {0},    0 },
+    };
+    int n_exemplo = sizeof(turma_exemplo) / sizeof(turma_exemplo[0]);
+    int n_verificacao = sizeof(turma_verificacao) / sizeof(turma_verificacao[0]);
+    int contagem[QTD_SITUACOES];   /* o mesmo vetor é reaproveitado (sobrescrito) */
 
-    printf("Situacao do Aluno\n");
-    for (int i = 0; i < n; i++) {
-        printf("(\"%s\",%s)\n", turma[i].nome, NOMES_SITUACAO[situacao(&turma[i])]);
+    printf("=== Situacao do Aluno ===\n");
+    for (int i = 0; i < n_exemplo; i++) {
+        printf("(\"%s\",%s)\n", turma_exemplo[i].nome,
+               NOMES_SITUACAO[situacao(&turma_exemplo[i])]);
     }
 
-    printf("\nRelatorio\n");
-    relatorio(turma, n, contagem);
+    printf("\n=== Relatorio ===\n");
+    relatorio(turma_exemplo, n_exemplo, contagem);
+    imprimir_relatorio(contagem);
+
+    printf("Caso especial (turma vazia):\n");
+    relatorio(NULL, 0, contagem);
+    imprimir_relatorio(contagem);
+
+    printf("\n=== Verificacao do enunciado ===\n");
+    relatorio(turma_verificacao, n_verificacao, contagem);
     imprimir_relatorio(contagem);
 
     return 0;
