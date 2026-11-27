@@ -49,24 +49,15 @@ lancarNota nome nota turma =
             | n == nome = (n, notas ++ [nota])
             | otherwise = (n, notas)
 
+-- mesma turma da verificacao do enunciado
 turma :: Turma
-turma =
-    [ ("Paula", [8, 6])
-    , ("Enzo", [5])
-    , ("Roussian", [])
-    , ("Matheus", [10, 9])
-    , ("Aime", [3, 2])
-    ]
-
--- mesma turma usada na verificacao do enunciado
-turmaVerificacao :: Turma
-turmaVerificacao = [("Ana", [8, 6]), ("Bia", [5]), ("Caio", [])]
+turma = [("Ana", [8, 6]), ("Bia", [5]), ("Caio", [])]
 
 main :: IO ()
 main = do
     putStrLn "=== Medias ==="
     print (media [8, 6])
-    print (media [10, 9])
+    print (media [5])
     print (media [])
 
     putStrLn "\n=== Situacao de cada aluno ==="
@@ -74,27 +65,25 @@ main = do
 
     putStrLn "\n=== Relatorio ==="
     print (relatorio turma)
-    print (relatorio turmaVerificacao)
     putStrLn "Turma vazia:"
     print (relatorio [])
 
     putStrLn "\n=== Alunos com media >= 7 ==="
     print (acimaDe 7 turma)
-    print (acimaDe 7 turmaVerificacao)
     putStrLn "Limite que ninguem alcanca:"
-    print (acimaDe 9.8 turma)
+    print (acimaDe 9 turma)
 
     putStrLn "\n=== Lancamento de nota ==="
-    let novaTurma = lancarNota "Enzo" 9 turma
+    let novaTurma = lancarNota "Bia" 9 turma
 
     putStrLn "Turma original:"
     print turma
-    putStrLn "Turma nova (nota 9 para o Enzo):"
+    putStrLn "Turma nova (nota 9 para a Bia):"
     print novaTurma
 
     putStrLn "Relatorio antes e depois:"
     print (relatorio turma)
     print (relatorio novaTurma)
 
-    putStrLn "Nota para aluno que nao existe (Bia) deixa a turma igual?"
-    print (lancarNota "Bia" 9 turma == turma)
+    putStrLn "Nota para um nome que nao esta na turma deixa a turma igual?"
+    print (lancarNota "Ninguem" 9 turma == turma)

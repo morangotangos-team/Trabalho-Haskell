@@ -49,15 +49,13 @@ int main(void) {
         "SemNotas"
     };
     Aluno turma[] = {
-        { "Paula",    {8, 6},  2 },
-        { "Enzo",     {5},     1 },
-        { "Roussian", {0},     0 },
-        { "Matheus",  {10, 9}, 2 },
-        { "Aime",     {3, 2},  2 }
+        { "Ana",  {8, 6}, 2 },
+        { "Bia",  {5},    1 },
+        { "Caio", {0},    0 }
     };
 
     int contagem[4];
-    relatorio(turma, 5, contagem);
+    relatorio(turma, 3, contagem);
 
     printf("Relatorio\n");
     printf("\n");

@@ -8,7 +8,7 @@ Atividade Final de **Paradigmas de Linguagens de Programação** (PUC Goiás), P
 
 | Arquivo | Conteúdo |
 | --- | --- |
-| `Desempenho.hs` | Programa em Haskell. **É o arquivo que tem a `main`.** Contém os tipos, as funções do projeto, as turmas de demonstração (`turma` e `turmaVerificacao`, que é a do enunciado) e a `main`. |
+| `Desempenho.hs` | Programa em Haskell. **É o arquivo que tem a `main`.** Contém os tipos, as funções do projeto, a turma de demonstração (`turma`, a mesma da verificação do enunciado: Ana, Bia e Caio) e a `main`. |
 | `Desempenho.c` | Uma funcionalidade do projeto reescrita em C: `relatorio`, sobre a mesma turma da versão em Haskell. |
 
 ## Como executar
@@ -51,7 +51,7 @@ data Situacao = Aprovado | Recuperacao | Reprovado | SemNotas
 ```
 
 - **Aluno como tupla `(nome, notas)`.** O aluno tem só dois dados e nenhuma regra própria. A tupla pode ser desmontada direto no parâmetro, como em `situacao (_, notas)`, e o nome sai com `fst`, como em `acimaDe`.
-- **Notas e turma como listas.** A quantidade de notas muda de aluno para aluno (Roussian tem nenhuma, Matheus tem duas), e a lista não tem tamanho fixo. A lista também sabe o próprio tamanho (`length`) e é o que `map` e `filter` percorrem.
+- **Notas e turma como listas.** A quantidade de notas muda de aluno para aluno (Caio tem nenhuma, Bia tem uma, Ana tem duas), e a lista não tem tamanho fixo. A lista também sabe o próprio tamanho (`length`) e é o que `map` e `filter` percorrem.
 - **Situação como tipo próprio (`data`).** As situações são um conjunto fechado de quatro valores, e o compilador só aceita esses quatro. `deriving Eq` permite comparar situações, o que é usado em `filter (== s)`, e `deriving Show` permite imprimi-las.
 - **`Maybe` para a média.** Uma lista vazia não tem média, então `media` devolve `Maybe Double`: `Nothing` quando não há notas e `Just m` quando há.
 
@@ -84,19 +84,19 @@ relatorio turma =
 
 Da entrada ao resultado, com a turma da `main`:
 
-1. **Transforma:** `map situacao turma` troca cada aluno pela sua situação. A turma `[("Paula",[8,6]), ("Enzo",[5]), ("Roussian",[]), ("Matheus",[10,9]), ("Aime",[3,2])]` vira `[Aprovado, Recuperacao, SemNotas, Aprovado, Reprovado]`. Para isso, `situacao` usa `media`: Paula tem `Just 7.0` e fica Aprovado; Roussian tem `Nothing` e fica SemNotas.
+1. **Transforma:** `map situacao turma` troca cada aluno pela sua situação. A turma `[("Ana",[8,6]), ("Bia",[5]), ("Caio",[])]` vira `[Aprovado, Recuperacao, SemNotas]`. Para isso, `situacao` usa `media`: Ana tem `Just 7.0` e fica Aprovado; Bia tem `Just 5.0` e fica Recuperacao; Caio tem `Nothing` e fica SemNotas.
 2. **Seleciona:** para cada situação `s`, `filter (== s) alunos` deixa só as iguais a `s`. Para `Aprovado`, sobra `[Aprovado, Aprovado]`.
 3. **Agrega:** `length` conta o que sobrou, e `contar` monta o par `(Aprovado, 2)`.
 4. **Junta:** `map contar todasSituacoes` faz isso para as quatro situações, na ordem de `todasSituacoes`.
 
-Resultado: `[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]`.
+Resultado: `[(Aprovado,1),(Recuperacao,1),(Reprovado,0),(SemNotas,1)]`.
 
 **Casos especiais:**
 
 - **Aluno sem notas:** `media [] = Nothing`, e `situacao` transforma isso em `SemNotas`. Não há divisão por zero.
-- **Situação sem nenhum aluno:** a contagem parte de `todasSituacoes`, e não dos alunos, então uma situação sem alunos aparece com 0. Na turma do enunciado, `relatorio turmaVerificacao` dá `(Reprovado,0)`.
+- **Situação sem nenhum aluno:** a contagem parte de `todasSituacoes`, e não dos alunos, então uma situação sem alunos aparece com 0. É o que acontece com `Reprovado` na nossa turma: ninguém está reprovado e mesmo assim aparece `(Reprovado,0)`.
 - **Turma vazia:** `relatorio []` dá as quatro situações com 0, sem nenhum tratamento extra.
-- **Limites das faixas:** as guardas usam `>=`, então média 7 exata é Aprovado (é o caso da Paula) e média 4 exata seria Recuperacao.
+- **Limites das faixas:** as guardas usam `>=`, então média 7 exata é Aprovado (é o caso da Ana) e média 4 exata seria Recuperacao.
 
 ## 3. Imutabilidade e pureza
 
@@ -112,19 +112,19 @@ lancarNota nome nota turma =
             | otherwise = (n, notas)
 ```
 
-`lancarNota` não altera a turma recebida: `map` monta uma lista nova, e `notas ++ [nota]` monta uma lista de notas nova. Na `main`, `lancarNota "Enzo" 9 turma` gera `novaTurma`, e as duas são impressas uma depois da outra:
+`lancarNota` não altera a turma recebida: `map` monta uma lista nova, e `notas ++ [nota]` monta uma lista de notas nova. Na `main`, `lancarNota "Bia" 9 turma` gera `novaTurma`, e as duas são impressas uma depois da outra:
 
 ```text
 Turma original:
-[("Paula",[8.0,6.0]),("Enzo",[5.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
-Turma nova (nota 9 para o Enzo):
-[("Paula",[8.0,6.0]),("Enzo",[5.0,9.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
+[("Ana",[8.0,6.0]),("Bia",[5.0]),("Caio",[])]
+Turma nova (nota 9 para a Bia):
+[("Ana",[8.0,6.0]),("Bia",[5.0,9.0]),("Caio",[])]
 Relatorio antes e depois:
-[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]
-[(Aprovado,3),(Recuperacao,0),(Reprovado,1),(SemNotas,1)]
+[(Aprovado,1),(Recuperacao,1),(Reprovado,0),(SemNotas,1)]
+[(Aprovado,2),(Recuperacao,0),(Reprovado,0),(SemNotas,1)]
 ```
 
-Depois da chamada, `turma` continua com `("Enzo",[5.0])`. As duas versões existem ao mesmo tempo, tanto que dá para tirar o relatório das duas. Em C, a forma usual seria `turma[1].notas[turma[1].qtd_notas++] = 9;`, que escreve no próprio vetor e perde o estado anterior. No caso especial, `lancarNota "Bia" 9 turma == turma` dá `True`: como não existe Bia, nenhum aluno muda.
+Depois da chamada, `turma` continua com `("Bia",[5.0])`. As duas versões existem ao mesmo tempo, tanto que dá para tirar o relatório das duas: com a nota nova, a média da Bia vai a 7 e ela passa de Recuperacao para Aprovado. Em C, a forma usual seria `turma[1].notas[turma[1].qtd_notas++] = 9;`, que escreve no próprio vetor e perde o estado anterior. No caso especial, `lancarNota "Ninguem" 9 turma == turma` dá `True`: como esse nome não está na turma, nenhum aluno muda.
 
 **Função pura × parte com IO.**
 
@@ -186,7 +186,7 @@ Em C é preciso de uma variável que muda a cada volta (`soma`), de um índice (
 
 ## 5. Comparação Haskell × C: `relatorio`
 
-As duas versões usam a mesma turma e dão a mesma contagem: 2 aprovados, 1 em recuperação, 1 reprovado e 1 sem notas.
+As duas versões usam a mesma turma e dão a mesma contagem: 1 aprovado, 1 em recuperação, 0 reprovados e 1 sem notas.
 
 ```c
 void relatorio(const Aluno turma[], int n, int contagem[4]) {
@@ -265,37 +265,33 @@ _(preencher pelo grupo: a decisão concreta que o grupo tomou)_
 ```text
 === Medias ===
 Just 7.0
-Just 9.5
+Just 5.0
 Nothing
 
 === Situacao de cada aluno ===
-("Paula",Aprovado)
-("Enzo",Recuperacao)
-("Roussian",SemNotas)
-("Matheus",Aprovado)
-("Aime",Reprovado)
+("Ana",Aprovado)
+("Bia",Recuperacao)
+("Caio",SemNotas)
 
 === Relatorio ===
-[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]
 [(Aprovado,1),(Recuperacao,1),(Reprovado,0),(SemNotas,1)]
 Turma vazia:
 [(Aprovado,0),(Recuperacao,0),(Reprovado,0),(SemNotas,0)]
 
 === Alunos com media >= 7 ===
-["Paula","Matheus"]
 ["Ana"]
 Limite que ninguem alcanca:
 []
 
 === Lancamento de nota ===
 Turma original:
-[("Paula",[8.0,6.0]),("Enzo",[5.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
-Turma nova (nota 9 para o Enzo):
-[("Paula",[8.0,6.0]),("Enzo",[5.0,9.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
+[("Ana",[8.0,6.0]),("Bia",[5.0]),("Caio",[])]
+Turma nova (nota 9 para a Bia):
+[("Ana",[8.0,6.0]),("Bia",[5.0,9.0]),("Caio",[])]
 Relatorio antes e depois:
-[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]
-[(Aprovado,3),(Recuperacao,0),(Reprovado,1),(SemNotas,1)]
-Nota para aluno que nao existe (Bia) deixa a turma igual?
+[(Aprovado,1),(Recuperacao,1),(Reprovado,0),(SemNotas,1)]
+[(Aprovado,2),(Recuperacao,0),(Reprovado,0),(SemNotas,1)]
+Nota para um nome que nao esta na turma deixa a turma igual?
 True
 ```
 
@@ -304,9 +300,9 @@ True
 ```text
 Relatorio
 
-Aprovado: 2 aluno(s)
+Aprovado: 1 aluno(s)
 Recuperacao: 1 aluno(s)
-Reprovado: 1 aluno(s)
+Reprovado: 0 aluno(s)
 SemNotas: 1 aluno(s)
 ```
 
