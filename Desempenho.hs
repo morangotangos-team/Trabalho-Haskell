@@ -1,3 +1,8 @@
+-- Projeto 4 - Desempenho Academico (Grupo 7)
+-- Integrantes: Enzo Guntijo Ghislotti, Aime Couto Andrade,
+--              Fernando Felipe de Castro Pereira e Paula Silverio de Castro
+-- Para rodar: runghc Desempenho.hs
+
 module Main where
 
 type Aluno = (String, [Double])
@@ -8,7 +13,9 @@ data Situacao = Aprovado | Recuperacao | Reprovado | SemNotas
 
 media :: [Double] -> Maybe Double
 media [] = Nothing
-media notas = Just (sum notas / fromIntegral (length notas))
+media notas = Just (soma / fromIntegral (length notas))
+    where
+        soma = foldr (+) 0 notas
 
 situacao :: Aluno -> Situacao
 situacao (_, notas) =
@@ -19,6 +26,8 @@ situacao (_, notas) =
             | m >= 4 -> Recuperacao
             | otherwise -> Reprovado
 
+-- a contagem parte das 4 situacoes (e nao dos alunos) para que as que
+-- tem zero alunos tambem aparecam no resultado
 relatorio :: Turma -> [(Situacao, Int)]
 relatorio turma =
     map contar todasSituacoes
@@ -26,7 +35,7 @@ relatorio turma =
         todasSituacoes = [Aprovado, Recuperacao, Reprovado, SemNotas]
         alunos = map situacao turma
 
-        contar s = (s, length (filter (== s) alunos))
+        contar s = (s, (length . filter (== s)) alunos)
 
 acimaDe :: Double -> Turma -> [String]
 acimaDe limite turma =
@@ -54,27 +63,43 @@ turma =
     , ("Aime", [3, 2])
     ]
 
+-- mesma turma usada na verificacao do enunciado
+turmaVerificacao :: Turma
+turmaVerificacao = [("Ana", [8, 6]), ("Bia", [5]), ("Caio", [])]
+
 main :: IO ()
 main = do
-    putStrLn "Medias"
+    putStrLn "=== Medias ==="
     print (media [8, 6])
     print (media [10, 9])
     print (media [])
 
-    putStrLn "\n Situacao do Aluno"
+    putStrLn "\n=== Situacao de cada aluno ==="
     mapM_ (\aluno -> print (fst aluno, situacao aluno)) turma
 
-    putStrLn "\n Relatorio "
+    putStrLn "\n=== Relatorio ==="
     print (relatorio turma)
+    print (relatorio turmaVerificacao)
+    putStrLn "Turma vazia:"
+    print (relatorio [])
 
-    putStrLn "\n=== Alunos acima da nota 7 ==="
+    putStrLn "\n=== Alunos com media >= 7 ==="
     print (acimaDe 7 turma)
+    print (acimaDe 7 turmaVerificacao)
+    putStrLn "Limite que ninguem alcanca:"
+    print (acimaDe 9.8 turma)
 
-    putStrLn "\n Lancamento de Nota"
-    let novaTurma = lancarNota "Bia" 9 turma
+    putStrLn "\n=== Lancamento de nota ==="
+    let novaTurma = lancarNota "Enzo" 9 turma
 
     putStrLn "Turma original:"
     print turma
-
-    putStrLn "Turma atualizada:"
+    putStrLn "Turma nova (nota 9 para o Enzo):"
     print novaTurma
+
+    putStrLn "Relatorio antes e depois:"
+    print (relatorio turma)
+    print (relatorio novaTurma)
+
+    putStrLn "Nota para aluno que nao existe (Bia) deixa a turma igual?"
+    print (lancarNota "Bia" 9 turma == turma)
