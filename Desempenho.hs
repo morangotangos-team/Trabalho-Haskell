@@ -21,8 +21,7 @@ situacao (_, notas) =
             | m >= 4 -> Recuperacao
             | otherwise -> Reprovado
 
--- a contagem parte das 4 situacoes (e nao dos alunos) para que as que
--- tem zero alunos tambem aparecam no resultado
+
 relatorio :: Turma -> [(Situacao, Int)]
 relatorio turma =
     map contar todasSituacoes
@@ -49,7 +48,7 @@ lancarNota nome nota turma =
             | n == nome = (n, notas ++ [nota])
             | otherwise = (n, notas)
 
--- mesma turma da verificacao do enunciado
+
 turma :: Turma
 turma = [("Ana", [8, 6]), ("Bia", [5]), ("Caio", [])]
 
