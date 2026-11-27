@@ -1,3 +1,8 @@
+/* Projeto 4 - Desempenho Academico (Grupo 7) - versao em C do relatorio
+ * Integrantes: Enzo Guntijo Ghislotti, Aime Couto Andrade,
+ *              Fernando Felipe de Castro Pereira e Paula Silverio de Castro
+ * Para rodar: gcc -std=c99 -Wall -o desempenho Desempenho.c && ./desempenho
+ */
 #include <stdio.h>
 #define MAX_NOTAS 10
 
