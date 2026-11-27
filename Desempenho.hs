@@ -1,8 +1,3 @@
--- Projeto 4 - Desempenho Academico (Grupo 7)
--- Integrantes: Enzo Guntijo Ghislotti, Aime Couto Andrade,
---              Fernando Felipe de Castro Pereira e Paula Silverio de Castro
--- Para rodar: runghc Desempenho.hs
-
 module Main where
 
 type Aluno = (String, [Double])
