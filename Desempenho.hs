@@ -1,3 +1,10 @@
+{-
+Enzo guntijo ghislotti
+Fernando Felipe
+Aime
+Paula
+-}
+
 module Main where
 
 type Aluno = (String, [Double])
