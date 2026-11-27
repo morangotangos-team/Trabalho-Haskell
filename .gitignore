@@ -1,0 +1,6 @@
+# binarios gerados ao compilar
+*.exe
+*.o
+*.hi
+desempenho
+Desempenho
