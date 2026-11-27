@@ -8,7 +8,7 @@ Atividade Final de **Paradigmas de Linguagens de Programação** (PUC Goiás), P
 
 | Arquivo | Conteúdo |
 | --- | --- |
-| `Desempenho.hs` | Programa em Haskell. **É o arquivo que tem a `main`.** Contém os tipos, as funções do projeto, a turma de demonstração e a `main`. |
+| `Desempenho.hs` | Programa em Haskell. **É o arquivo que tem a `main`.** Contém os tipos, as funções do projeto, as turmas de demonstração (`turma` e `turmaVerificacao`, que é a do enunciado) e a `main`. |
 | `Desempenho.c` | Uma funcionalidade do projeto reescrita em C: `relatorio`, sobre a mesma turma da versão em Haskell. |
 
 ## Como executar
@@ -79,7 +79,7 @@ relatorio turma =
         todasSituacoes = [Aprovado, Recuperacao, Reprovado, SemNotas]
         alunos = map situacao turma
 
-        contar s = (s, length (filter (== s) alunos))
+        contar s = (s, (length . filter (== s)) alunos)
 ```
 
 Da entrada ao resultado, com a turma da `main`:
@@ -94,8 +94,8 @@ Resultado: `[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]`.
 **Casos especiais:**
 
 - **Aluno sem notas:** `media [] = Nothing`, e `situacao` transforma isso em `SemNotas`. Não há divisão por zero.
-- **Situação sem nenhum aluno:** a contagem parte de `todasSituacoes`, e não dos alunos, então uma situação sem alunos aparece com 0.
-- **Turma vazia:** `relatorio []` daria as quatro situações com 0, sem nenhum tratamento extra.
+- **Situação sem nenhum aluno:** a contagem parte de `todasSituacoes`, e não dos alunos, então uma situação sem alunos aparece com 0. Na turma do enunciado, `relatorio turmaVerificacao` dá `(Reprovado,0)`.
+- **Turma vazia:** `relatorio []` dá as quatro situações com 0, sem nenhum tratamento extra.
 - **Limites das faixas:** as guardas usam `>=`, então média 7 exata é Aprovado (é o caso da Paula) e média 4 exata seria Recuperacao.
 
 ## 3. Imutabilidade e pureza
@@ -112,7 +112,19 @@ lancarNota nome nota turma =
             | otherwise = (n, notas)
 ```
 
-`lancarNota` não altera a turma recebida: `map` monta uma lista nova, e `notas ++ [nota]` monta uma lista de notas nova. Na `main`, a turma original e a nova são impressas uma depois da outra. A chamada usa o nome `"Bia"`, que não existe na turma, então as duas saem iguais. Com um nome que existe, por exemplo `lancarNota "Enzo" 9 turma`, a turma nova teria `("Enzo",[5.0,9.0])` e a original continuaria com `("Enzo",[5.0])`. As duas versões existem ao mesmo tempo. Em C, a forma usual seria escrever a nota direto no vetor do aluno, e o estado anterior se perderia.
+`lancarNota` não altera a turma recebida: `map` monta uma lista nova, e `notas ++ [nota]` monta uma lista de notas nova. Na `main`, `lancarNota "Enzo" 9 turma` gera `novaTurma`, e as duas são impressas uma depois da outra:
+
+```text
+Turma original:
+[("Paula",[8.0,6.0]),("Enzo",[5.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
+Turma nova (nota 9 para o Enzo):
+[("Paula",[8.0,6.0]),("Enzo",[5.0,9.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
+Relatorio antes e depois:
+[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]
+[(Aprovado,3),(Recuperacao,0),(Reprovado,1),(SemNotas,1)]
+```
+
+Depois da chamada, `turma` continua com `("Enzo",[5.0])`. As duas versões existem ao mesmo tempo, tanto que dá para tirar o relatório das duas. Em C, a forma usual seria `turma[1].notas[turma[1].qtd_notas++] = 9;`, que escreve no próprio vetor e perde o estado anterior. No caso especial, `lancarNota "Bia" 9 turma == turma` dá `True`: como não existe Bia, nenhum aluno muda.
 
 **Função pura × parte com IO.**
 
@@ -131,51 +143,50 @@ main  :: IO ()
 | --- | --- | --- |
 | `map` | `relatorio` (`map situacao turma`, `map contar todasSituacoes`), `acimaDe` (`map fst`), `lancarNota` (`map atualizar turma`) | Transformar cada elemento de uma lista sem laço nem índice |
 | `filter` | `relatorio` (`filter (== s) alunos`), `acimaDe` (`filter verificar turma`) | Selecionar os elementos que atendem a uma condição |
-| `sum` e `length` | `media`, `relatorio` | Agregar uma lista em um único valor (soma, quantidade) |
-| Aplicação parcial | `(== s)`, `filter verificar`, `map fst`, `map situacao` | Criar uma função nova fixando um argumento |
+| `foldr` | `media` (`soma = foldr (+) 0 notas`) | Agregar a lista de notas em um único valor, a soma |
+| Composição `.` | `relatorio` (`length . filter (== s)`) | Juntar "selecionar" e "contar" em uma função só |
+| Aplicação parcial | `(== s)`, `filter (== s)`, `filter verificar`, `map fst`, `map situacao` | Criar uma função nova fixando um argumento |
 | Funções como argumento | `map` e `filter` recebem `situacao`, `contar`, `fst`, `verificar`, `atualizar`, `(== s)` | Separar o percurso da lista (`map`/`filter`) da regra aplicada a cada elemento |
 | `Maybe` | `media`, usado em `situacao` e `acimaDe` | Representar a média que não existe sem usar valor especial |
 
-O item "Análise" do Projeto 4 cita `foldr` e composição. **Este código não usa `foldr` explícito nem o operador de composição `.`.** A agregação é feita com `sum` e `length`. Onde uma função recebe o resultado de outra, isso está escrito como chamada aninhada, por exemplo `map fst (filter verificar turma)` e `length (filter (== s) alunos)`.
-
 Os dois conceitos centrais no código:
 
-**a) `filter` com aplicação parcial.**
+**a) `foldr` (agregação).**
 
 ```haskell
-contar s = (s, length (filter (== s) alunos))
+media notas = Just (soma / fromIntegral (length notas))
+    where
+        soma = foldr (+) 0 notas
 ```
 
-`(== s)` é o operador `==` com um lado já preenchido: vira a função "é igual a `s`?". `filter` aplica essa função a cada situação e mantém só as iguais, e `length` conta. A contagem por situação ficou escrita como selecionar e depois contar, sem variável que muda.
+`foldr (+) 0 [8, 6]` calcula `8 + (6 + 0)` = 14. O `0` é o resultado para a lista vazia e `(+)` diz como juntar cada nota com o que já foi somado do resto da lista. A soma sai sem variável acumuladora.
 
-**b) `map` com função como argumento.**
+**b) Composição com aplicação parcial.**
 
 ```haskell
-alunos = map situacao turma
+contar s = (s, (length . filter (== s)) alunos)
 ```
 
-`map` percorre a turma e aplica `situacao` a cada aluno. O percurso fica com `map`, e a regra de classificação fica separada em `situacao`.
+`(== s)` é o operador `==` com um lado já preenchido: vira a função "é igual a `s`?". `filter (== s)` é o `filter` com a condição já fixada. `length . filter (== s)` junta as duas: primeiro filtra, depois conta. A contagem por situação ficou escrita como selecionar e depois contar, sem variável que muda.
 
-**Comparação com o laço equivalente.** A contagem de uma situação, nas duas linguagens:
+**Comparação com o laço equivalente.** A soma das notas, nas duas linguagens:
 
 ```haskell
-length (filter (== s) alunos)
+soma = foldr (+) 0 notas
 ```
 
 ```c
-for (int i = 0; i < n; i++) {
-    ...
-    if (media >= 7.0) {
-        contagem[APROVADO]++;
-    } ...
+double soma = 0;
+for (int j = 0; j < turma[i].qtd_notas; j++) {
+    soma += turma[i].notas[j];
 }
 ```
 
-Em Haskell, a contagem é uma expressão que devolve um valor novo. Em C, ela é um laço com índice (`i`), tamanho passado à parte (`n`) e um vetor alterado a cada volta (`contagem`).
+Em C é preciso de uma variável que muda a cada volta (`soma`), de um índice (`j`) e do tamanho guardado à parte (`qtd_notas`). No `foldr` só se informa o valor inicial e a operação; não tem índice nem condição de parada para errar.
 
 ## 5. Comparação Haskell × C: `relatorio`
 
-As duas versões usam a mesma turma e dão o mesmo resultado: `[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]`.
+As duas versões usam a mesma turma e dão a mesma contagem: 2 aprovados, 1 em recuperação, 1 reprovado e 1 sem notas.
 
 ```c
 void relatorio(const Aluno turma[], int n, int contagem[4]) {
@@ -209,7 +220,7 @@ void relatorio(const Aluno turma[], int n, int contagem[4]) {
 | Aspecto | Haskell (`Desempenho.hs`) | C (`Desempenho.c`) |
 | --- | --- | --- |
 | **Organização dos dados** | Tupla, listas e `data Situacao`. A lista sabe o próprio tamanho. | `struct`, vetor de tamanho máximo com `qtd_notas` à parte, `enum`. O tamanho da turma (`n`) é passado separado. |
-| **Controle do processamento** | Etapas separadas em funções: `media`, `situacao`, `map`, `filter`, `length`. | Uma função com laços aninhados que calcula a média, classifica e conta na mesma passada. |
+| **Controle do processamento** | Etapas separadas em funções: `media` (com `foldr`), `situacao`, `map`, `filter`, `length`. | Uma função com laços aninhados que calcula a média, classifica e conta na mesma passada. |
 | **Estado** | Nada é alterado. Cada etapa devolve um valor novo, e o resultado é o retorno da função. | `soma` e o vetor `contagem` são alterados a cada volta. O resultado é escrito no vetor recebido por parâmetro. |
 | **Tratamento de erro** | Lista vazia vira `Nothing`, e o `case` obriga a tratar esse caso antes de usar a média. | O teste `qtd_notas == 0` vem antes da divisão. Se for esquecido, o compilador não avisa, e a média vira `NaN`. |
 
@@ -238,7 +249,7 @@ void relatorio(const Aluno turma[], int n, int contagem[4]) {
 - **Funções puras e IO isolado:** as regras (média, classificação, contagem, busca, lançamento de nota) estão em funções puras, e só a `main` tem `IO`.
 - **Imutabilidade:** `lancarNota` devolve uma turma nova, e nenhuma variável é reatribuída no programa.
 - **Processamento em etapas:** `relatorio` é transformar (`map`), selecionar (`filter`) e agregar (`length`), em vez de uma rotina que atualiza contadores.
-- **Funções de ordem superior:** `map` e `filter` recebem funções como argumento, e `(== s)` é criada por aplicação parcial.
+- **Funções de ordem superior e composição:** `map`, `filter` e `foldr` recebem funções como argumento, `(== s)` é criada por aplicação parcial e `length . filter (== s)` junta duas funções em uma.
 - **Tipos para os casos especiais:** `Maybe` representa a média que não existe, e `data Situacao` limita os valores possíveis.
 
 ### Maior dificuldade ao abandonar a solução imperativa
@@ -252,36 +263,51 @@ _(preencher pelo grupo: a decisão concreta que o grupo tomou)_
 ### Haskell (`runghc Desempenho.hs`)
 
 ```text
-Medias
+=== Medias ===
 Just 7.0
 Just 9.5
 Nothing
 
- Situacao do Aluno
+=== Situacao de cada aluno ===
 ("Paula",Aprovado)
 ("Enzo",Recuperacao)
 ("Roussian",SemNotas)
 ("Matheus",Aprovado)
 ("Aime",Reprovado)
 
- Relatorio 
+=== Relatorio ===
 [(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]
+[(Aprovado,1),(Recuperacao,1),(Reprovado,0),(SemNotas,1)]
+Turma vazia:
+[(Aprovado,0),(Recuperacao,0),(Reprovado,0),(SemNotas,0)]
 
-=== Alunos acima da nota 7 ===
+=== Alunos com media >= 7 ===
 ["Paula","Matheus"]
+["Ana"]
+Limite que ninguem alcanca:
+[]
 
- Lancamento de Nota
+=== Lancamento de nota ===
 Turma original:
 [("Paula",[8.0,6.0]),("Enzo",[5.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
-Turma atualizada:
-[("Paula",[8.0,6.0]),("Enzo",[5.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
+Turma nova (nota 9 para o Enzo):
+[("Paula",[8.0,6.0]),("Enzo",[5.0,9.0]),("Roussian",[]),("Matheus",[10.0,9.0]),("Aime",[3.0,2.0])]
+Relatorio antes e depois:
+[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]
+[(Aprovado,3),(Recuperacao,0),(Reprovado,1),(SemNotas,1)]
+Nota para aluno que nao existe (Bia) deixa a turma igual?
+True
 ```
 
 ### C (`./desempenho`)
 
 ```text
 Relatorio
-[(Aprovado,2),(Recuperacao,1),(Reprovado,1),(SemNotas,1)]
+
+Aprovado: 2 aluno(s)
+Recuperacao: 1 aluno(s)
+Reprovado: 1 aluno(s)
+SemNotas: 1 aluno(s)
 ```
 
 ## Integrantes
