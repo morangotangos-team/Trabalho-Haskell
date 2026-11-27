@@ -1,3 +1,11 @@
+/*
+Enzo guntijo ghislotti
+Fernando Felipe
+Aime
+Paula
+*/
+
+
 #include <stdio.h>
 #define MAX_NOTAS 10
 
